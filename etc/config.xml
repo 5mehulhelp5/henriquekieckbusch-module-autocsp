@@ -6,6 +6,8 @@
             <autocsp>
                 <enabled>0</enabled>
                 <capture>0</capture>
+                <override_mode>0</override_mode>
+                <enforced_mode>1</enforced_mode>
                 <inline_scripts>0</inline_scripts>
             </autocsp>
         </henrique_kieckbusch>

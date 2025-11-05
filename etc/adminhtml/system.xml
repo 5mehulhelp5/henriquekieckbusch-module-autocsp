@@ -30,6 +30,26 @@
                     <br/><b>[Recommended: Yes, perform a few test orders, then switch this setting to "No".]</b>
                     ]]></comment>
                 </field>
+                <field id="override_mode" translate="label comment" type="select" sortOrder="25"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Override CSP Mode</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[<b>When disabled:</b> Use Magento's native CSP configuration (e.g., strict on checkout only).<br/>
+                    <b>When enabled:</b> Override CSP mode on all pages based on "Enforced Mode" setting below.<br/>
+                    <b>[Recommended: No - Let Magento control CSP mode per scope]</b>]]></comment>
+                </field>
+                <field id="enforced_mode" translate="label comment" type="select" sortOrder="26"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enforced Mode</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Only applies when "Override CSP Mode" is enabled.<br/>
+                    <b>Yes:</b> Force strict CSP enforcement on all pages (violations blocked).<br/>
+                    <b>No:</b> Force report-only mode on all pages (violations logged but not blocked).<br/>
+                    <b>[Recommended: Yes if overriding]</b>]]></comment>
+                    <depends>
+                        <field id="override_mode">1</field>
+                    </depends>
+                </field>
                 <field id="inline_scripts" translate="label comment" type="select" sortOrder="30"
                        showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enable Auto Inline Script CSP</label>

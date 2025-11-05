@@ -12,9 +12,11 @@ class ConfigManagerPlugin
 {
     private const XML_PATH_CAPTURE = 'henrique_kieckbusch/autocsp/capture';
     private const XML_PATH_MODULE_ENABLED = 'henrique_kieckbusch/autocsp/enabled';
+    private const XML_PATH_OVERRIDE_MODE = 'henrique_kieckbusch/autocsp/override_mode';
+    private const XML_PATH_ENFORCED_MODE = 'henrique_kieckbusch/autocsp/enforced_mode';
 
     /**
-     * Overriden result if this module is enabled and capture mode is on
+     * Overriden result if this module is enabled and override settings are configured
      *
      * @var ModeConfiguredInterface
      */
@@ -28,7 +30,11 @@ class ConfigManagerPlugin
     }
 
     /**
-     * Update the reportOnly and reportUri properties
+     * Update the reportOnly and reportUri properties based on configuration
+     *
+     * Priority 1: If capture mode is enabled, always set report-only and report-uri
+     * Priority 2: If override mode is enabled, set reportOnly based on enforced mode
+     * Priority 3: Respect Magento's native CSP configuration
      *
      * @param ConfigManager $subject
      * @param ModeConfiguredInterface $result
@@ -43,12 +49,35 @@ class ConfigManagerPlugin
         }
 
         $isAutoCspEnabled = $this->scopeConfig->isSetFlag(self::XML_PATH_MODULE_ENABLED);
-        $isCaptureModeEnabled = $this->scopeConfig->isSetFlag(self::XML_PATH_CAPTURE);
 
-        $this->modeConfigured = !$isAutoCspEnabled || !$isCaptureModeEnabled ? $result : new ModeConfigured(
-            $isCaptureModeEnabled,
-            $this->urlBuilder->getUrl('autocsp/report/index'),
-        );
+        // If module is disabled, respect Magento's native config
+        if (!$isAutoCspEnabled) {
+            $this->modeConfigured = $result;
+            return $this->modeConfigured;
+        }
+
+        $isCaptureModeEnabled = $this->scopeConfig->isSetFlag(self::XML_PATH_CAPTURE);
+        $isOverrideModeEnabled = $this->scopeConfig->isSetFlag(self::XML_PATH_OVERRIDE_MODE);
+        $isEnforcedModeEnabled = $this->scopeConfig->isSetFlag(self::XML_PATH_ENFORCED_MODE);
+
+        // Priority 1: If capture mode is enabled, always set report-only and report-uri
+        if ($isCaptureModeEnabled) {
+            $this->modeConfigured = new ModeConfigured(
+                true, // Always report-only when capturing
+                $this->urlBuilder->getUrl('autocsp/report/index'),
+            );
+        }
+        // Priority 2: If override mode is enabled, set reportOnly based on enforced mode
+        elseif ($isOverrideModeEnabled) {
+            $this->modeConfigured = new ModeConfigured(
+                !$isEnforcedModeEnabled, // If enforced, reportOnly = false
+                $result->getReportUri(), // Keep existing report URI
+            );
+        }
+        // Priority 3: Respect Magento's native CSP configuration
+        else {
+            $this->modeConfigured = $result;
+        }
 
         return $this->modeConfigured;
     }
